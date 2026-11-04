@@ -1,32 +1,39 @@
 import tkinter as tk
+import random
 
-def grade_guess(user_guess, start, end):
+SEED = 42
+WORD_LIST = "../data/words.txt"
+random.seed(SEED)
+
+def grade_guess(start, end):
     winning_word_freq = {}
+
     for char in winning_word:
         winning_word_freq[char] = winning_word_freq.get(char, 0) + 1
 
-    if user_guess == winning_word:
-        for i in range(start, end):
+    for i, char in zip(range(start, end), winning_word):
+        if word_slots[i]["text"] == char:
             word_slots[i].config(bg="green", fg="white")
+            winning_word_freq[char] -= 1
 
-    else:
-        for i, char in zip(range(start, end), winning_word):
-            if word_slots[i]["text"] == char:
-                word_slots[i].config(bg="green", fg="white")
-                winning_word_freq[word_slots[i]["text"]] -= 1
-            elif word_slots[i]["text"] in winning_word and winning_word_freq[word_slots[i]["text"]] > 0:
-                word_slots[i].config(bg="orange", fg="white")
-                winning_word_freq[word_slots[i]["text"]] -= 1
-            else:
-                word_slots[i].config(bg="black", fg="white")
-    return
+    for i in range(start, end):
+        guess_char = word_slots[i]["text"]
+
+        if guess_char == winning_word[i - start]:
+            continue  
+        elif winning_word_freq.get(guess_char, 0) > 0:
+            word_slots[i].config(bg="orange", fg="white")
+            winning_word_freq[guess_char] -= 1
+
+        else:
+            word_slots[i].config(bg="black", fg="white")
 
 def handle_enter_button():
     global current_row, current_col, game_won, game_over
     if game_won or game_over:
         return
 
-    if current_col != 4:
+    if current_col != 4 or word_slots[(current_row*5) + 4]["text"] == "":
         status_label.config(text="Not enough letters.")
         root.after(2000, lambda: status_label.config(text="Guess the word!"))
         return
@@ -38,16 +45,16 @@ def handle_enter_button():
             user_guess += word_slots[j]["text"]
 
         if user_guess == winning_word:
-            grade_guess(user_guess, start, end)
+            grade_guess(start, end)
             status_label.config(text=f"Correct!")
             game_won = True
             game_over = True
             return
         if current_row+1 == 6:
-            grade_guess(user_guess, start, end)
+            grade_guess(start, end)
             status_label.config(text=f"Game over! Word was {winning_word}.")
         else:
-            grade_guess(user_guess, start, end)
+            grade_guess(start, end)
             status_label.config(text=f"Incorrect.")   
             root.after(2000, lambda: status_label.config(text="Guess the word!")) 
             current_row += 1
@@ -81,10 +88,12 @@ def handle_restart_button():
     current_row, current_col = 0, 0
     game_won = False
     game_over = False
-    winning_word = "CARRO"
+    winning_word = random.choice(word_list).upper().strip()
 
+with open(WORD_LIST, "r") as f:
+    word_list = f.readlines()
 
-winning_word = "JESUS"
+winning_word = random.choice(word_list).upper().strip()
 
 keys = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "A", 
         "S", "D", "F", "G", "H", "J", "K", "L", "ENTER", "Z", 
